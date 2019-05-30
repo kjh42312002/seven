@@ -28,6 +28,12 @@ adjListptr *adjList = NULL;
 
 short int *visited;
 
+void gotoxy(int x, int y)
+{
+	COORD Pos = { x - 1, y - 1 };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
+}
+
 void SetColor(unsigned short text, unsigned short back) {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), text | (back << 4));
 }
@@ -45,10 +51,41 @@ void CursorView(char show)//커서숨기기
 	SetConsoleCursorInfo(hConsole, &ConsoleCursor);
 }
 
-void gotoxy(int x, int y)
+
+//도움말 출력
+void PrintHelp()
 {
-	COORD Pos = { x - 1, y - 1 };
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
+	HWND myconsole = GetConsoleWindow();
+	HDC mydc = GetDC(myconsole);
+	HBITMAP hImage, hOldBitmap;
+	HDC hMemDC = CreateCompatibleDC(mydc);
+
+	hImage = (HBITMAP)LoadImage(NULL, TEXT("7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+
+	hOldBitmap = (HBITMAP)SelectObject(hMemDC, hImage);
+	BitBlt(mydc, 0, 0, 200 * 10, 200 * 20, hMemDC, 0, 0, SRCCOPY);
+	SelectObject(hMemDC, hOldBitmap);
+	DeleteObject(hImage);
+	DeleteDC(hMemDC);
+	ReleaseDC(myconsole, mydc);
+}
+
+//타이틀 출력
+void PrintTitle()
+{
+	HWND myconsole = GetConsoleWindow();
+	HDC mydc = GetDC(myconsole);
+	HBITMAP hImage, hOldBitmap;
+	HDC hMemDC = CreateCompatibleDC(mydc);
+
+	hImage = (HBITMAP)LoadImage(NULL, TEXT("6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+
+	hOldBitmap = (HBITMAP)SelectObject(hMemDC, hImage);
+	BitBlt(mydc, 0, 0, 200 * 10, 200 * 20, hMemDC, 0, 0, SRCCOPY);
+	SelectObject(hMemDC, hOldBitmap);
+	DeleteObject(hImage);
+	DeleteDC(hMemDC);
+	ReleaseDC(myconsole, mydc);
 }
 
 int SearchIndex(char target[]) {
@@ -468,22 +505,126 @@ void Display(char start[]) {
 	}
 }
 
+void input(int mode) {
+	system("cls");
+	char start[10];
+	if (mode == 0)	//경로 탐색
+	{
+		char destination[10];
+		gotoxy(1, 1);
+		printf("출발지 입력: ");
+		scanf_s("%s", start, 10);
+		printf("도착지 입력: ");
+		scanf_s("%s", destination, 10);
+		DisplayAB(start, destination);
+	}
+	else if (mode == 1) {
+		gotoxy(1, 1);
+		printf("출발지 입력: ");
+		scanf_s("%s", start, 10);
+		Display(start);
+	}
+}
+
+//메인메뉴
+void MainMenu()
+{
+	int x, y;
+	while (1) {
+
+		x = 18; y = 25;
+		gotoxy(x, y);
+		printf("┌───────────────────────────┐");
+		gotoxy(x, y + 1);
+		printf("│ 　 충북대 길안내 도우미   │");
+		gotoxy(x, y + 2);
+		printf("└───────────────────────────┘");
+		x += 2;
+		y += 4;
+		for (int i = 0; i < 4; i++) {
+			gotoxy(x, y + i * 4);
+			printf("┌───────────────────────┐");
+			gotoxy(x, y + i * 4 + 2);
+			printf("└───────────────────────┘");
+		}
+		gotoxy(x, 30);
+		printf("│　　　 1.경로탐색　    │");
+		gotoxy(x, 34);
+		printf("│       2.편의시설      │");
+		gotoxy(x, 38);
+		printf("│       3. 도움말　　   │");
+		gotoxy(x, 42);
+		printf("│　　   4.  종료　  　  │");
+		char key;
+		x -= 3;
+		y++;
+		y = 30;
+		gotoxy(x, y);
+		printf("▷");
+		while (1)
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 72:
+				if (y != 30) {
+					gotoxy(x, y);
+					printf("　");
+					y -= 4; gotoxy(x, y);
+					printf("▷");
+				}
+				break;
+			case 80:
+				if (y != 42) {
+					gotoxy(x, y);
+					printf("　");
+					y += 4; gotoxy(x, y);
+					printf("▷");
+				}
+				break;
+			case 13:
+				if (y == 30) {
+					input(0);//경로탐색함수
+				}
+				else if (y == 34) {
+					input(1);//편의시설검색함수                 메뉴선택하고 스페이스바 누를때 해당 메뉴로 이동하도록
+				}
+				else if (y == 38) {
+					PrintHelp();//도움말 함수 
+					while (!_kbhit());
+				}
+				else if (y == 42) {
+					return; //종료
+				}
+				break;
+			}
+			if (key == 13) {
+				system("cls");
+				break;
+			}
+		}
+	}
+}
+
+
 void main()
 {
-	char start[10]; //= { 'S','4','-','1' };
-	char destination[10]; //= { 'N','1','4' };
+	//char start[10]; //= { 'S','4','-','1' };
+	//char destination[10]; //= { 'N','1','4' };
 	system("color F0");
 	system("mode con cols=67 lines=50");
+	system("title 2019.06.09(07조 CBNU DIRECTION GUIDE ");
 	CursorView(0);
 	HWND consoleWindow = GetConsoleWindow();
 	SetWindowPos(consoleWindow, 0, 500, -10, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 	buildingList = ReadBuildingData("BuildingData.txt");
 	CreateGraphFromFile("RoadData.txt");
-	printf("로딩 완료!===========================================\n\n");
-	printf("출발지 입력 : ");
-	scanf_s("%s",start,10);
-	//printf("도착지 입력 : ");
-	//scanf_s("%s", destination, 10);
-	Display(start);
-	gotoxy(1, 1);
+	PrintTitle();
+	while (!_kbhit());
+	getchar();
+	PrintHelp();
+	while (!_kbhit());
+	system("cls");
+	getchar();
+	MainMenu();
 }
