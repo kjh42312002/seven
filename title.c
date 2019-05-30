@@ -4,14 +4,14 @@
 #include<time.h>
 #include<stdlib.h>
 
-void gotoxy(int x, int y) { //gotoxyí•¨ìˆ˜ 
+void gotoxy(int x, int y) { //gotoxyÇÔ¼ö 
 	COORD pos = { 2 * x,y };
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
 typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
 
-void setcursortype(CURSOR_TYPE c) { //ì»¤ì„œ ì•ˆë³´ì´ê²Œ í•˜ëŠ” í•¨ìˆ˜ 
+void setcursortype(CURSOR_TYPE c) { //Ä¿¼­ ¾Èº¸ÀÌ°Ô ÇÏ´Â ÇÔ¼ö 
 	CONSOLE_CURSOR_INFO CurInfo;
 	switch (c) {
 	case NOCURSOR:
@@ -35,7 +35,7 @@ void setColor(unsigned short text, unsigned short back)
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), text | (back << 4));
 }
 
-void titleMenu(void) { // ê²Œì„íƒ€ì´í‹€
+void titleMenu(void) { // °ÔÀÓÅ¸ÀÌÆ²
 	int i, j;
 	int text_Direction_x = 1;
 	int text_Direction_y = 8;
@@ -68,7 +68,7 @@ void titleMenu(void) { // ê²Œì„íƒ€ì´í‹€
 			for (i = 0; i < 5; i++) {
 				for (j = 0; j < 33; j++) {
 					gotoxy(text_Direction_x + j, text_Direction_y + i);
-					if (text_Direction[i][j] == 1) printf("â– ");
+					if (text_Direction[i][j] == 1) printf("¡á");
 				}
 			}
 		}
@@ -77,7 +77,7 @@ void titleMenu(void) { // ê²Œì„íƒ€ì´í‹€
 			for (i = 0; i < 5; i++) {
 				for (j = 0; j < 21; j++) {
 					gotoxy(text_Guide_x + j, text_Guide_y + i);
-					if (text_Guide[i][j] == 1) printf("â– ");
+					if (text_Guide[i][j] == 1) printf("¡á");
 				}
 			}
 		}
@@ -88,10 +88,10 @@ void titleMenu(void) { // ê²Œì„íƒ€ì´í‹€
 
 int main() {
 	system("mode con:cols=67 lines=50");
-	system("title 2019.06.09(07ì¡° CBNU DIRECTION GUIDE) "); //ìƒë‹¨ë¬¸êµ¬ ë­ë¡œ ì •í• ì§€ ê²€í† !!!!!
+	system("title 2019.06.09(07Á¶ CBNU DIRECTION GUIDE ");
 	system("color f0");
 	setColor(10, 15);
-	srand((unsigned)time(NULL)); //ë‚œìˆ˜í‘œìƒì„± 
-	setcursortype(NOCURSOR); //ì»¤ì„œ ì—†ì•° 
-	titleMenu(); //ê²Œì„íƒ€ì´í‹€
+	srand((unsigned)time(NULL)); //³­¼öÇ¥»ı¼º 
+	setcursortype(NOCURSOR); //Ä¿¼­ ¾ø¾Ú 
+	titleMenu(); //°ÔÀÓÅ¸ÀÌÆ²
 }
