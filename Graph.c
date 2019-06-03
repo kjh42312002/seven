@@ -4,11 +4,14 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <windows.h>
+#include <time.h>
 
 int   numVertices;
 int	  numEdges;
 
 enum Colors {black, blue, green, cyan, red, purple, yellow, white, gray, Lblue, Lgreen, Lcyan, Lred, Lpurple, Lyellow, Lwhite};
+
+unsigned short theme = white;
 
 typedef struct building {
 	int buildingIndex;
@@ -28,6 +31,8 @@ adjListptr *adjList = NULL;
 
 short int *visited;
 
+short int battery = 30;
+
 void gotoxy(int x, int y)
 {
 	COORD Pos = { x - 1, y - 1 };
@@ -35,6 +40,15 @@ void gotoxy(int x, int y)
 }
 
 void SetColor(unsigned short text, unsigned short back) {
+	if (theme == black && back == Lwhite) {
+		back = black;
+		if (text < gray && black < text) {
+			text += 8;
+		}
+		else if (text == black) {
+			text = Lwhite;
+		}
+	}
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), text | (back << 4));
 }
 
@@ -51,8 +65,6 @@ void CursorView(char show)//커서숨기기
 	SetConsoleCursorInfo(hConsole, &ConsoleCursor);
 }
 
-
-//도움말 출력
 void PrintHelp()
 {
 	HWND myconsole = GetConsoleWindow();
@@ -70,7 +82,6 @@ void PrintHelp()
 	ReleaseDC(myconsole, mydc);
 }
 
-//타이틀 출력
 void PrintTitle()
 {
 	HWND myconsole = GetConsoleWindow();
@@ -86,6 +97,54 @@ void PrintTitle()
 	DeleteObject(hImage);
 	DeleteDC(hMemDC);
 	ReleaseDC(myconsole, mydc);
+}
+
+void StatusBar() {
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Lwhite | (black << 4));
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	gotoxy(1, 1);
+	printf("¶.iII");
+	for (int x = 6; x < 46; x++) {
+		printf(" ");
+	}
+	for (int x = 9; x >= 0; x--) {
+		if (battery / 10 < x) {
+			SetColor(gray, gray);
+		}
+		else {
+			if (battery < 16) {
+				SetColor(Lred, Lred);
+				if (battery < 5) {
+					SetColor(red, red);
+				}
+			}
+			else {
+				SetColor(Lgreen, Lgreen);
+			}
+		}
+		printf(" ");
+	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Lwhite | (black << 4));
+	if (battery < 16) {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Lred | (black << 4));
+		if (battery < 5) {
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), red | (black << 4));
+		}
+	}
+	printf("%3d%%", battery);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Lwhite | (black << 4));
+	if (battery == 0) {
+		SetColor(gray, black);
+		system("cls");
+		gotoxy(30, 25);
+		printf("(전원 꺼짐)");
+		while (1);
+	}
+	printf("  %02d:%02d\n",
+		tm.tm_hour, tm.tm_min);
+	SetColor(black, Lwhite);
+	return;
 }
 
 int SearchIndex(char target[]) {
@@ -261,6 +320,27 @@ int* FindPath(int start, int finish) {
 	return output;
 }
 
+void LoadingEffect(int length) {
+	short int x[8] = { 30,32,34,36,36,34,32,30 };
+	short int y[8] = { 33,34,34,33,32,31,31,32 };
+	for (int point = 0; point < length; point++) {
+		for (int i = 0; i < 8; i++) {
+			gotoxy(x[i], y[i]);
+			printf("○");
+		}
+		gotoxy(x[point % 8], y[point % 8]);
+		printf("●");
+		gotoxy(x[point % 8 - 1 < 0 ? 7 : point % 8 - 1], y[point % 8 - 1 < 0 ? 7 : point % 8 - 1]);
+		printf("◎");
+		Sleep(25);
+	}
+	for (int i = 0; i < 8; i++) {
+		gotoxy(x[i], y[i]);
+		printf(" ");
+	}
+
+}
+
 void DrawSquare() {
 	gotoxy(2, 17);
 	printf("┏");
@@ -290,6 +370,7 @@ void DrawSquare() {
 		printf("━");
 	}
 	printf("┛");
+	LoadingEffect(24);
 }
 
 void RefreshScreen(int location, int* output) {
@@ -341,7 +422,7 @@ void RefreshScreen(int location, int* output) {
 		gotoxy(15, 16 + i * 2);
 		printf("%s", buildingList[output[location+i]].buildingName);
 		SetColor(black, Lwhite);
-		gotoxy(13, 17 + i * 2);
+		gotoxy(13, 16 + i * 2);
 		printf("│");
 		gotoxy(3, 17 + i * 2);
 		for (int d = 1; d < 57; d++) {
@@ -374,8 +455,10 @@ void RefreshScreenDiv(int location, int* outputA, int* outputB) {
 		if (strlen(buildingList[outputA[location + i]].buildingName) > 16) {
 			printf("…");
 		}
-		gotoxy(4, 17 + i * 2);
 		SetColor(black, Lwhite);
+		gotoxy(13, 16 + i * 2);
+		printf("│");
+		gotoxy(4, 17 + i * 2);
 		for (int d = 1; d < 28; d++) {
 			printf("─");
 		}
@@ -507,11 +590,12 @@ void Display(char start[]) {
 
 void input(int mode) {
 	system("cls");
+	StatusBar();
 	char start[10];
 	if (mode == 0)	//경로 탐색
 	{
 		char destination[10];
-		gotoxy(1, 1);
+		gotoxy(1, 2);
 		printf("출발지 입력: ");
 		scanf_s("%s", start, 10);
 		printf("도착지 입력: ");
@@ -519,19 +603,18 @@ void input(int mode) {
 		DisplayAB(start, destination);
 	}
 	else if (mode == 1) {
-		gotoxy(1, 1);
+		gotoxy(1, 2);
 		printf("출발지 입력: ");
 		scanf_s("%s", start, 10);
 		Display(start);
 	}
 }
 
-//메인메뉴
 void MainMenu()
 {
 	int x, y;
 	while (1) {
-
+		StatusBar();
 		x = 18; y = 25;
 		gotoxy(x, y);
 		printf("┌───────────────────────────┐");
@@ -556,16 +639,28 @@ void MainMenu()
 		gotoxy(x, 42);
 		printf("│　　   4.  종료　  　  │");
 		char key;
-		x -= 3;
-		y++;
+		gotoxy(2, 49);
+		printf("T : 테마 변경(현재 테마: %s)", theme == white?"Light":"Dark");
+		x = 17;
 		y = 30;
 		gotoxy(x, y);
 		printf("▷");
 		while (1)
 		{
+			fflush(stdin);
 			key = _getch();
 			switch (key)
 			{
+			case 'T' :
+			case 't':
+				if (theme == black) {
+					theme = white;
+				}
+				else {
+					theme = black;
+				}
+				SetColor(black, Lwhite);
+				break;
 			case 72:
 				if (y != 30) {
 					gotoxy(x, y);
@@ -585,9 +680,11 @@ void MainMenu()
 			case 13:
 				if (y == 30) {
 					input(0);//경로탐색함수
+					battery -= 2;
 				}
 				else if (y == 34) {
 					input(1);//편의시설검색함수                 메뉴선택하고 스페이스바 누를때 해당 메뉴로 이동하도록
+					battery -= 2;
 				}
 				else if (y == 38) {
 					PrintHelp();//도움말 함수 
@@ -598,19 +695,18 @@ void MainMenu()
 				}
 				break;
 			}
-			if (key == 13) {
+			if (key == 13 || key == 't' || key == 'T') {
 				system("cls");
+				battery -= 1;
+				rewind(stdin);
 				break;
 			}
 		}
 	}
 }
 
-
 void main()
 {
-	//char start[10]; //= { 'S','4','-','1' };
-	//char destination[10]; //= { 'N','1','4' };
 	system("color F0");
 	system("mode con cols=67 lines=50");
 	system("title 2019.06.09(07조 CBNU DIRECTION GUIDE ");
